@@ -23,7 +23,7 @@ pipeline {
 
         stage('Construir imagen Docker') {
             steps {
-                sh 'docker build -t $IMAGE_NAME ./app'
+                sh 'docker build --no-cache -t $IMAGE_NAME ./app'
             }
         }
 
@@ -43,17 +43,23 @@ pipeline {
         stage('Validar despliegue') {
             steps {
                 sh 'docker ps'
+                sh 'curl http://localhost:5000'
                 sh 'curl http://localhost:5000/health'
             }
         }
     }
 
     post {
+        always {
+            sh 'docker image prune -a -f || true'
+            sh 'docker container prune -f || true'
+            sh 'docker builder prune -a -f || true'
+        }
         success {
             echo 'Pipeline ejecutado correctamente'
         }
         failure {
-            echo 'Pipeline falló'
+            echo 'Pipeline fallo'
         }
     }
 }
